@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chat Bot Final Project</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=Anuphan:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: dark "AI control room" with aurora glows and dot grid; device-framed live embeds for each work; three light lavender "report" bands for results, problems and recommendations. Single committed look. */
+:root{
+  color-scheme: dark;
+  --bg:#070B1F; --bg2:#0C1230; --bg3:#141B45;
+  --glass:rgba(255,255,255,.045); --glass2:rgba(255,255,255,.08); --edge:rgba(169,148,255,.22);
+  --violet:#7C5CFF; --violet2:#A68CFF; --purple:#4A26A8; --sky:#7CC4FF; --pink:#E36BDB;
+  --text:#EEF0FF; --text2:#AEB3DA; --text3:#7D83B3;
+  --paper:#F4F2FC; --paper2:#FFFFFF; --ink:#17153A; --ink2:#5A5680; --pline:#E2DCF4;
+  --ok:#2BC08A; --warn:#F2A93B; --bad:#F06A8A;
+  --grad:linear-gradient(100deg,#7CC4FF 0%,#A68CFF 45%,#E36BDB 100%);
+  --f-display:"Bai Jamjuree","Anuphan",system-ui,sans-serif;
+  --f-body:"Anuphan","Leelawadee UI","Thonburi",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:20px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(70px + env(safe-area-inset-top,0px))}
+body{background:var(--bg);color:var(--text);font-family:var(--f-body);font-size:17px;line-height:1.7;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--sky);outline-offset:3px;border-radius:8px}
+h1,h2,h3,h4{font-family:var(--f-display);line-height:1.22;text-wrap:balance;margin:0}
+p{margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));position:relative}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* progress + nav */
+.progress{position:fixed;top:env(safe-area-inset-top,0px);left:0;height:3px;width:0;background:var(--grad);z-index:70;box-shadow:0 0 12px #A68CFF}
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:rgba(7,11,31,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--edge)}
+.nav .wrap{display:flex;align-items:center;gap:14px;height:64px}
+.brand{font-family:var(--f-display);font-weight:700;white-space:nowrap;text-decoration:none;display:flex;align-items:center;gap:10px;font-size:17px}
+.logo{width:30px;height:30px;border-radius:10px;background:var(--grad);display:grid;place-items:center;box-shadow:0 0 18px rgba(166,140,255,.6)}
+.logo svg{width:18px;height:18px;fill:none;stroke:#0B0F2A;stroke-width:2.2}
+.navlinks{display:flex;gap:4px;overflow-x:auto;flex:1;min-width:0;scrollbar-width:none;mask-image:linear-gradient(90deg,#000 92%,transparent)}
+.navlinks::-webkit-scrollbar{display:none}
+.navlinks a{white-space:nowrap;text-decoration:none;font-size:14px;padding:7px 12px;border-radius:999px;color:var(--text2);transition:.2s}
+.navlinks a:hover{color:var(--text);background:var(--glass2)}
+.navlinks a.on{color:#0B0F2A;background:var(--grad);font-weight:600}
+
+/* buttons */
+.btn{font-family:var(--f-body);font-size:15.5px;font-weight:600;display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:999px;border:1px solid transparent;cursor:pointer;text-decoration:none;line-height:1.2;white-space:nowrap;transition:transform .2s,box-shadow .2s,background .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-glow{background:var(--grad);color:#0B0F2A;box-shadow:0 10px 30px -8px rgba(166,140,255,.7)}
+.btn-glow:hover{box-shadow:0 14px 40px -6px rgba(166,140,255,.9)}
+.btn-glass{background:var(--glass2);color:var(--text);border-color:var(--edge);backdrop-filter:blur(8px)}
+.btn-glass:hover{border-color:var(--violet2)}
+.btn-ink{background:var(--ink);color:#fff}
+.btn-sm{padding:8px 15px;font-size:14px}
+.btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+
+/* aurora + grid decoration */
+.deco{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:drift 18s ease-in-out infinite alternate}
+.o1{width:520px;height:520px;background:#5B3BFF;top:-160px;right:-120px}
+.o2{width:420px;height:420px;background:#1F7BFF;bottom:-180px;left:-120px;animation-delay:-6s;opacity:.4}
+.o3{width:300px;height:300px;background:#C04BD8;top:30%;left:45%;animation-delay:-11s;opacity:.28}
+@keyframes drift{to{transform:translate(60px,40px) scale(1.12)}}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(170,160,255,.16) 1px,transparent 1px);background-size:26px 26px;mask-image:radial-gradient(ellipse at 50% 30%,#000 30%,transparent 75%)}
+.lines{position:absolute;inset:0;background:linear-gradient(transparent 0 calc(100% - 1px),rgba(124,92,255,.08) 0) 0 0/100% 80px,linear-gradient(90deg,transparent 0 calc(100% - 1px),rgba(124,92,255,.08) 0) 0 0/80px 100%;mask-image:linear-gradient(180deg,#000,transparent 80%)}
+
+/* sections */
+section.band{padding-block:96px;position:relative;overflow:hidden}
+section.band>.wrap{z-index:1}
+.alt{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)}
+.light{background:var(--paper);color:var(--ink)}
+.light .muted{color:var(--ink2)}
+.muted{color:var(--text2)}
+.head{display:grid;gap:10px;margin-bottom:44px;position:relative}
+.bignum{position:absolute;right:0;top:-40px;font-family:var(--f-display);font-weight:700;font-size:clamp(110px,16vw,200px);line-height:1;color:transparent;-webkit-text-stroke:1.5px rgba(166,140,255,.22);user-select:none;pointer-events:none}
+.light .bignum{-webkit-text-stroke-color:rgba(74,38,168,.12)}
+.eyebrow{font-family:var(--f-mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;gap:10px;align-items:center;color:var(--sky)}
+.eyebrow::before{content:"";width:28px;height:2px;background:var(--grad);border-radius:2px}
+.light .eyebrow{color:var(--purple)}
+.h2{font-size:clamp(30px,4.6vw,50px);font-weight:700;letter-spacing:-.01em}
+.lead{font-size:18.5px;max-width:66ch}
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:960px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:1fr}}
+@media (max-width:640px){.g2,.g4{grid-template-columns:1fr}}
+
+/* glass cards with gradient edge */
+.glass{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid var(--edge);border-radius:var(--r);padding:26px;min-width:0;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.glass.hl{border-color:transparent;background:linear-gradient(var(--bg3),var(--bg3)) padding-box,var(--grad) border-box}
+.paper{background:var(--paper2);border:1px solid var(--pline);border-radius:var(--r);padding:26px;min-width:0;box-shadow:0 20px 50px -30px rgba(74,38,168,.35)}
+.card-ic{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(124,196,255,.2),rgba(166,140,255,.25));border:1px solid var(--edge);margin-bottom:14px}
+.card-ic svg{width:24px;height:24px;stroke:var(--sky);fill:none;stroke-width:1.8}
+.light .card-ic{background:linear-gradient(135deg,#E6F2FF,#EEE8FF);border-color:var(--pline)}
+.light .card-ic svg{stroke:var(--purple)}
+h3.t{font-size:21px;font-weight:600}
+ul.clean{list-style:none;padding:0;margin:0;display:grid;gap:9px}
+ul.clean li{padding-left:22px;position:relative}
+ul.clean li::before{content:"";position:absolute;left:2px;top:.62em;width:9px;height:9px;border-radius:3px;background:var(--grad);transform:rotate(45deg)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:4px 11px;border-radius:999px;white-space:nowrap;line-height:1.4;background:var(--glass2);border:1px solid var(--edge);color:var(--text2)}
+.light .pill{background:#EFEBFC;border-color:var(--pline);color:var(--purple)}
+.mono{font-family:var(--f-mono)}
+
+/* HERO */
+.hero{padding-block:80px 40px;min-height:auto}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
+@media (max-width:960px){.hero-grid{grid-template-columns:1fr}}
+.badge{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;background:var(--glass2);border:1px solid var(--edge);font-size:14px;color:var(--text2)}
+.badge b{background:var(--grad);color:#0B0F2A;padding:3px 10px;border-radius:999px;font-size:12px;font-family:var(--f-mono)}
+.hero h1{font-size:clamp(44px,7.2vw,86px);font-weight:700;letter-spacing:-.02em;margin-top:22px;line-height:1.08}
+.hero .lead{margin-top:22px;color:var(--text2)}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.by{margin-top:26px;font-size:14px;color:var(--text3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.by .av{display:flex}
+.by .av i{width:28px;height:28px;border-radius:50%;border:2px solid var(--bg);margin-left:-8px;background:var(--grad)}
+.by .av i:first-child{margin-left:0;background:linear-gradient(135deg,#7CC4FF,#7C5CFF)}
+.by .av i:last-child{background:linear-gradient(135deg,#E36BDB,#7C5CFF)}
+
+.phone{position:relative;justify-self:center;width:100%;max-width:370px;border-radius:38px;padding:12px;background:linear-gradient(160deg,#252D66,#0E1336);box-shadow:0 0 0 1px var(--edge),0 40px 90px -30px rgba(124,92,255,.8);animation:float 6s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-12px)}}
+.phone .scr{border-radius:28px;background:#0A0F2A;padding:16px 14px;overflow:hidden}
+.phone-top{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--edge)}
+.avatar{width:38px;height:38px;border-radius:13px;background:var(--grad);display:grid;place-items:center;font-family:var(--f-mono);font-size:11px;color:#0B0F2A;font-weight:600}
+.phone-top small{display:block;color:var(--ok);font-size:12px}
+.chat{display:grid;gap:9px;padding-top:14px;font-size:14.5px}
+.bub{max-width:86%;padding:9px 13px;border-radius:18px;line-height:1.5;animation:pop .5s both}
+.bub.u{justify-self:end;background:var(--violet);color:#fff;border-bottom-right-radius:5px}
+.bub.b{justify-self:start;background:#1A2257;color:var(--text);border-bottom-left-radius:5px}
+.bub.fb{background:#3A1F45;color:#FFD3E6}
+.chat .bub:nth-child(2){animation-delay:.3s}.chat .bub:nth-child(3){animation-delay:.6s}.chat .bub:nth-child(4){animation-delay:.9s}.chat .bub:nth-child(5){animation-delay:1.2s}.chat .bub:nth-child(6){animation-delay:1.5s}
+@keyframes pop{from{transform:translateY(8px) scale(.96);opacity:.3}}
+.rich{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.rich span{font-size:12.5px;text-align:center;padding:8px 4px;border-radius:12px;background:#141B45;border:1px solid var(--edge);color:var(--text2)}
+.float-chip{position:absolute;font-family:var(--f-mono);font-size:12px;padding:7px 12px;border-radius:12px;background:rgba(20,27,69,.85);border:1px solid var(--edge);color:var(--sky);backdrop-filter:blur(8px);white-space:nowrap;animation:float 7s ease-in-out infinite}
+.fc1{left:-46px;top:70px;animation-delay:-2s}.fc2{right:-40px;top:46%;color:var(--violet2);animation-delay:-4s}.fc3{left:-30px;bottom:60px;color:var(--pink)}
+@media (max-width:520px){.float-chip{display:none}}
+.cap{font-size:12px;color:var(--text3);text-align:center;margin-top:10px}
+
+.marquee{margin-top:64px;border-block:1px solid var(--edge);overflow:hidden;padding-block:14px;background:rgba(255,255,255,.02)}
+.mtrack{display:flex;gap:44px;width:max-content;animation:mq 34s linear infinite;font-family:var(--f-display);font-size:20px;font-weight:600;color:var(--text3)}
+.mtrack span{display:flex;align-items:center;gap:44px}
+.mtrack span::after{content:"✦";color:var(--violet2);font-size:14px}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+.works{margin-top:48px}
+.work{display:flex;flex-direction:column;gap:6px;text-decoration:none;transition:transform .25s,border-color .25s}
+.work:hover{transform:translateY(-6px);border-color:var(--violet2)}
+.work .go{margin-top:auto;padding-top:12px;font-size:14px;color:var(--sky);display:flex;align-items:center;gap:6px}
+.work .n{position:absolute;top:18px;right:20px;font-family:var(--f-mono);font-size:13px;color:var(--text3)}
+
+/* objectives */
+.obj{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:11px 0;border-bottom:1px dashed var(--edge)}
+.obj:last-child{border-bottom:0}
+.num{font-family:var(--f-mono);width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:14px;background:var(--glass2);border:1px solid var(--edge);color:var(--sky)}
+.obj small{display:block;color:var(--text3);font-size:13px}
+.kpa{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.kpa h3{font-size:19px}
+.tag{font-family:var(--f-display);font-size:22px;font-weight:700;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#0B0F2A}
+.t-k{background:linear-gradient(135deg,#7CC4FF,#5C8BFF)}.t-p{background:linear-gradient(135deg,#A68CFF,#7C5CFF)}.t-a{background:linear-gradient(135deg,#F09BE8,#B44CD0)}
+
+.flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;position:relative}
+.flow::before{content:"";position:absolute;left:4%;right:4%;top:27px;height:2px;background:var(--grad);opacity:.5}
+@media (max-width:860px){.flow{grid-template-columns:repeat(2,minmax(0,1fr))}.flow::before{display:none}}
+.fstep{position:relative;text-align:center}
+.fstep .dot{width:54px;height:54px;margin:0 auto;border-radius:18px;display:grid;place-items:center;font-family:var(--f-mono);font-size:14px;font-weight:500;background:var(--bg3);border:1px solid var(--edge);color:var(--sky)}
+.fstep.key .dot{background:var(--grad);color:#0B0F2A;border:0;box-shadow:0 0 24px rgba(166,140,255,.6)}
+.fstep h4{font-size:16px;margin-top:12px}
+.fstep p{font-size:14px;color:var(--text2);line-height:1.5;margin-top:4px}
+
+/* ADDIE */
+.addie{display:grid;grid-template-columns:380px 1fr;gap:36px;align-items:center}
+@media (max-width:960px){.addie{grid-template-columns:1fr}}
+.wheel{max-width:380px;width:100%;margin:0 auto;filter:drop-shadow(0 20px 50px rgba(124,92,255,.35))}
+.wheel svg{width:100%;height:auto;display:block}
+.seg{cursor:pointer;outline:none}
+.seg path{transition:opacity .25s,transform .25s;transform-origin:190px 190px;opacity:.55}
+.seg:hover path,.seg:focus path{opacity:.85}
+.seg.on path{opacity:1;transform:scale(1.05)}
+.spin{transform-origin:190px 190px;animation:rot 40s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.tab{font-family:var(--f-body);font-size:15px;font-weight:600;padding:9px 16px;border-radius:999px;border:1px solid var(--edge);background:var(--glass);color:var(--text2);cursor:pointer;transition:.2s}
+.tab.on{color:#0B0F2A;border-color:transparent}
+.panel h3{font-size:30px;font-weight:700}
+.panel .en{font-family:var(--f-mono);font-size:13px;color:var(--sky);letter-spacing:.12em}
+.items{display:grid;gap:10px;margin-top:20px}
+.item{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;padding:14px 16px;border-radius:14px;background:var(--glass);border:1px solid var(--edge);animation:pop .4s both}
+.item i{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-style:normal;font-size:13px;font-family:var(--f-mono);color:#0B0F2A}
+
+/* EMBEDS */
+.media{display:grid;grid-template-columns:1.45fr .55fr;gap:28px;align-items:start}
+@media (max-width:1000px){.media{grid-template-columns:1fr}}
+.embed{position:relative;border-radius:22px;padding:10px;background:linear-gradient(160deg,#2A3274,#0F1438);box-shadow:0 0 0 1px var(--edge),0 40px 80px -40px rgba(124,92,255,.9)}
+.embed::after{content:"";position:absolute;inset:-1px;border-radius:23px;padding:1px;background:var(--grad);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.6;pointer-events:none}
+.chrome{display:flex;align-items:center;gap:10px;padding:6px 6px 12px}
+.chrome .lights{display:flex;gap:6px}
+.chrome .lights i{width:11px;height:11px;border-radius:50%;background:#FF6B8B}
+.chrome .lights i:nth-child(2){background:#FFC857}.chrome .lights i:nth-child(3){background:#3ED598}
+.chrome .url{flex:1;min-width:0;font-family:var(--f-mono);font-size:12.5px;background:rgba(0,0,0,.3);border:1px solid var(--edge);border-radius:999px;padding:6px 14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);display:flex;align-items:center;gap:8px}
+.chrome .url::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);flex:none}
+.ctrl{display:flex;gap:6px}
+.ctrl button,.ctrl a{width:34px;height:34px;border-radius:10px;border:1px solid var(--edge);background:rgba(0,0,0,.25);color:var(--text);display:grid;place-items:center;cursor:pointer;text-decoration:none}
+.ctrl button:hover,.ctrl a:hover{border-color:var(--violet2);background:rgba(124,92,255,.25)}
+.ctrl svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+.vp{position:relative;border-radius:14px;overflow:hidden;background:#fff;aspect-ratio:16/10;max-width:100%}
+.vp.video{aspect-ratio:16/9;background:#000}
+.vp.tall{aspect-ratio:4/3}
+.vp iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
+.vp .loading{position:absolute;inset:0;display:grid;place-items:center;background:#0E1338;color:var(--text2);font-size:14px}
+.vp .loading span{display:flex;gap:10px;align-items:center}
+.vp .loading span::before{content:"";width:18px;height:18px;border-radius:50%;border:2px solid var(--edge);border-top-color:var(--violet2);animation:rot 1s linear infinite}
+.fallback{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;background:radial-gradient(circle at 50% 40%,#2B2475,#0B1030 70%);color:var(--text)}
+.fallback .fi{width:68px;height:68px;border-radius:22px;margin:0 auto 14px;display:grid;place-items:center;background:var(--grad);box-shadow:0 0 40px rgba(166,140,255,.6)}
+.fallback .fi svg{width:30px;height:30px;stroke:#0B0F2A;fill:none;stroke-width:2}
+.fallback p{font-size:14px;color:var(--text2);max-width:46ch;margin:8px auto 16px}
+.embed.max{position:fixed;z-index:90;inset:calc(10px + env(safe-area-inset-top,0px)) calc(10px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));display:flex;flex-direction:column}
+.embed.max .vp{aspect-ratio:auto;flex:1}
+.scrim{position:fixed;inset:0;background:rgba(5,8,22,.8);backdrop-filter:blur(6px);z-index:85}
+.side{display:grid;gap:16px}
+.side h3{font-size:20px}
+.kv{display:grid;gap:4px;padding:12px 0;border-bottom:1px solid var(--edge)}
+.kv:last-child{border-bottom:0}
+.kv dt{font-size:13px;color:var(--text3);font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+
+/* DEMO GALLERY */
+.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+@media (max-width:760px){.gallery{grid-template-columns:1fr}}
+.tile{position:relative;border-radius:22px;overflow:hidden;background:var(--bg3);border:1px solid var(--edge);text-decoration:none;display:flex;flex-direction:column;transition:transform .3s,box-shadow .3s}
+.tile:hover{transform:translateY(-6px);box-shadow:0 30px 60px -30px rgba(124,92,255,.9)}
+.thumb{position:relative;aspect-ratio:16/10;overflow:hidden;background:radial-gradient(circle at 30% 30%,#3A2C9A,#0E1338 70%)}
+.thumb iframe{position:absolute;top:0;left:0;width:1280px;height:800px;border:0;transform-origin:0 0;pointer-events:none;background:#fff}
+.thumb .ph{position:absolute;inset:0;display:grid;place-items:center}
+.thumb .ph svg{width:64px;height:64px;stroke:var(--violet2);fill:none;stroke-width:1.4;opacity:.8}
+.tile .info{padding:18px 20px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.tile .info small{display:block;font-family:var(--f-mono);font-size:12px;color:var(--text3)}
+.tile .num{position:absolute;top:14px;left:14px;font-family:var(--f-mono);font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(7,11,31,.75);border:1px solid var(--edge);z-index:2}
+.checks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:22px}
+@media (max-width:860px){.checks{grid-template-columns:1fr 1fr}}
+.checks label{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:var(--glass);border:1px solid var(--edge);cursor:pointer;font-size:15px}
+.checks input{width:18px;height:18px;accent-color:var(--violet)}
+
+/* RESULTS (light) */
+.stat .v{font-family:var(--f-display);font-size:54px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;background:linear-gradient(100deg,#2F6BFF,#7C5CFF 55%,#C04BD8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .l{font-weight:700;margin-top:8px;font-size:17px}
+.stat p{font-size:14.5px;color:var(--ink2);margin-top:4px}
+.meter{height:10px;border-radius:999px;background:#ECE8FA;overflow:hidden;margin-top:14px}
+.meter i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5C8BFF,#7C5CFF,#C04BD8)}
+.tbl{overflow-x:auto;border:1px solid var(--pline);border-radius:var(--r);background:var(--paper2);box-shadow:0 20px 50px -34px rgba(74,38,168,.4)}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+th,td{padding:14px 16px;border-bottom:1px solid var(--pline);text-align:left;vertical-align:top}
+th{background:linear-gradient(90deg,#EFEAFE,#E8F1FF);font-weight:700;font-size:14.5px;white-space:nowrap;color:var(--purple)}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#FAF8FF}
+.matrix td.c,.matrix th.c{text-align:center;white-space:nowrap;padding-inline:8px}
+.y{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,#5C8BFF,#7C5CFF);color:#fff;font-size:13px}
+.src{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;display:inline-block}
+.s-doc{background:#E3F6EE;color:#16795A}.s-work{background:#EDE7FF;color:var(--purple)}.s-plan{background:#FFF0DA;color:#94590A}
+.pn{font-family:var(--f-mono);font-weight:500;color:var(--violet)}
+.verdict{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center;padding:26px;border-radius:var(--r);background:linear-gradient(120deg,#1B1F5C,#3B1F8A 60%,#6A2CA0);color:#fff;margin-top:22px}
+.verdict .big{font-family:var(--f-display);font-size:44px;font-weight:700;line-height:1}
+.verdict p{color:#D9D6FF}
+@media (max-width:640px){.verdict{grid-template-columns:1fr}}
+
+/* conclusion */
+.thanks{font-family:var(--f-display);font-size:clamp(44px,8vw,96px);font-weight:700;text-align:center;line-height:1.05;margin-top:70px}
+.center{text-align:center}
+.links4{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:28px}
+
+.totop{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;width:52px;height:52px;border-radius:18px;background:var(--grad);color:#0B0F2A;border:0;cursor:pointer;display:grid;place-items:center;box-shadow:0 12px 30px -8px rgba(166,140,255,.8);transition:opacity .3s,transform .3s}
+.totop.hide{opacity:0;transform:translateY(20px);pointer-events:none}
+.totop svg{width:22px;height:22px;stroke:#0B0F2A;fill:none;stroke-width:2.4}
+footer{padding-block:30px;background:#050817;color:var(--text3);font-size:14px;border-top:1px solid var(--edge)}
+
+.rv.play{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{transform:translateY(22px);opacity:.3}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+/* PRESENTATION MODE */
+.pbar{display:none}
+body.present .nav,body.present .totop,body.present footer,body.present .progress{display:none}
+body.present section.band{display:none;min-height:100vh;padding-block:60px 120px}
+body.present section.band.cur{display:block;animation:fade .4s ease}
+@keyframes fade{from{opacity:.15;transform:scale(.99)}}
+body.present .pbar{display:flex;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:70;gap:8px;align-items:center;padding:8px;border-radius:999px;background:rgba(12,18,48,.88);backdrop-filter:blur(12px);border:1px solid var(--edge);color:var(--text);max-width:calc(100% - 32px);flex-wrap:wrap;justify-content:center}
+.pbar .count{font-family:var(--f-mono);font-size:14px;padding:0 10px}
+.pbar .ttl{font-size:14px;color:var(--text2);max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px}
+.pdots{display:flex;gap:5px;padding:0 6px}
+.pdots i{width:7px;height:7px;border-radius:50%;background:var(--edge);cursor:pointer}
+.pdots i.on{background:var(--violet2);width:20px;border-radius:4px}
+@media (max-width:700px){.pdots,.pbar .ttl{display:none}}
+.probs{list-style:none;padding:0;margin:0;display:grid;gap:16px}
+.prob{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;background:var(--paper2);border:1px solid var(--pline);border-radius:var(--r);padding:22px 24px;box-shadow:0 20px 50px -34px rgba(74,38,168,.4)}
+.pnum{font-family:var(--f-display);font-weight:700;font-size:30px;line-height:1;width:58px;height:58px;border-radius:18px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#5C8BFF,#7C5CFF 55%,#C04BD8)}
+.pbody{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-width:0}
+@media (max-width:760px){.pbody{grid-template-columns:1fr}.prob{grid-template-columns:1fr}}
+.pq,.pa{display:grid;gap:6px;align-content:start;min-width:0}
+.pa{padding-left:18px;border-left:2px dashed var(--pline)}
+@media (max-width:760px){.pa{padding-left:0;border-left:0;padding-top:14px;border-top:2px dashed var(--pline)}}
+.pq p{font-weight:600}
+.lab{justify-self:start;font-size:12.5px;font-weight:700;padding:3px 11px;border-radius:999px;letter-spacing:.02em}
+.lab-p{background:#FCE6EC;color:#B2365A}.lab-s{background:#E3F6EE;color:#16795A}
+.qa{font-family:var(--f-display);font-weight:700;font-size:clamp(40px,7vw,80px);line-height:1;text-align:center;margin-top:18px;letter-spacing:.04em}
+.qa span{display:inline-block;padding:10px 34px;border-radius:28px;border:1.5px solid var(--edge);background:rgba(255,255,255,.04)}
+</style>
+</head>
+<body>
+
+
+<div class="progress" id="progress"></div>
+<nav class="nav" aria-label="หัวข้อการนำเสนอ">
+  <div class="wrap">
+    <a class="brand" href="#home"><span class="logo"><svg viewBox="0 0 24 24"><path d="M4 6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H10l-4 4v-4.2A3 3 0 0 1 4 14z"/><path d="M9 10h.01M15 10h.01"/></svg></span>Chat Bot</a>
+    <div class="navlinks" id="navlinks"></div>
+    <button class="btn btn-glow btn-sm" id="presentBtn" type="button"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg>นำเสนอ</button>
+  </div>
+</nav>
+
+<!-- 1 HOME -->
+<section class="band hero" id="home" data-title="หน้าหลัก">
+  <div class="deco"><div class="lines"></div><div class="dots"></div><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <span class="badge"><b>FINAL PROJECT</b>Chatbot Learning Media · ปีการศึกษา 2569</span>
+        <h1>การออกแบบ<br>และสร้าง <span class="grad-text">Chat Bot</span></h1>
+        <p class="lead">ชุดสื่อการเรียนรู้สำหรับวิชาการสร้างแชทบอท ระดับ ปวช.1 ที่รวมเว็บไซต์การเรียนรู้ เกมประกอบการสอน คู่มือการเล่นเกม และวิดีโอสาธิตการสร้างบอทด้วย LINE Official Account เข้ากับแผนการสอน 60 นาที</p>
+        <div class="meta"><span class="pill">วิชา การสร้างแชทบอท</span><span class="pill">ปวช.1</span><span class="pill">60 นาที</span><span class="pill">CED-3</span><span class="pill">ครุศาสตร์อุตสาหกรรม มจพ.</span></div>
+        <div class="cta">
+          <button class="btn btn-glow" type="button" data-action="present"><svg viewBox="0 0 24 24"><path d="M7 4l12 8-12 8z"/></svg>เริ่มนำเสนอผลงาน</button>
+          <a class="btn btn-glass" href="#website">เข้าสู่สื่อการเรียนรู้</a>
+          <a class="btn btn-glass" href="#demo">ดูผลงานจริง</a>
+        </div>
+        <div class="by"><span class="av"><i></i><i></i><i></i></span>ณัฐวรา วิเศษทรัพย์ · นพวรรณ กลิ่นนิรันดร์ · ณัฐดนัย เหล่าเรือง</div>
+      </div>
+      <div style="position:relative;display:grid">
+        <div class="phone" aria-label="ภาพจำลองบทสนทนา CED Coffee Bot">
+          <div class="scr">
+            <div class="phone-top"><div class="avatar">CED</div><div><b style="font-size:15px">CED Coffee Bot</b><small>● ออนไลน์ ตอบทันที 24 ชม.</small></div></div>
+            <div class="chat">
+              <div class="bub u">ร้านเปิดกี่โมง</div>
+              <div class="bub b">เปิดทุกวัน 07.00–18.00 น. หยุดทุกวันพุธค่ะ ☕</div>
+              <div class="bub u">มีโปรอะไรบ้าง</div>
+              <div class="bub b">สะสมครบ 10 แก้ว ฟรี 1 แก้ว และนักเรียนลด 10%</div>
+              <div class="bub u">ร้านมี Wi-Fi ไหม</div>
+              <div class="bub b fb">ขออภัยค่ะ บอทยังไม่มีข้อมูลนี้ เลือกเมนูด้านล่างได้เลย</div>
+            </div>
+            <div class="rich" style="margin-top:10px"><span>เวลาเปิด–ปิด</span><span>เมนูแนะนำ</span><span>โปรโมชัน</span><span>ที่ตั้งร้าน</span></div>
+          </div>
+        </div>
+        <span class="float-chip fc1">intent: ask_office_hours</span>
+        <span class="float-chip fc2">Fallback ✓</span>
+        <span class="float-chip fc3">Rich Menu · 4 ปุ่ม</span>
+        <p class="cap">จำลองจากสถานการณ์ร้าน CED Coffee ในใบสั่งงานที่ 1–2</p>
+      </div>
+    </div>
+  </div>
+  <div class="marquee" aria-hidden="true"><div class="mtrack">
+    <span>Chat Bot</span><span>Intent</span><span>Entity</span><span>NLP / NLU</span><span>FAQ</span><span>Fallback</span><span>Rich Menu</span><span>LINE Official Account</span><span>User Persona</span><span>Knowledge Base</span>
+    <span>Chat Bot</span><span>Intent</span><span>Entity</span><span>NLP / NLU</span><span>FAQ</span><span>Fallback</span><span>Rich Menu</span><span>LINE Official Account</span><span>User Persona</span><span>Knowledge Base</span>
+  </div></div>
+  <div class="wrap works">
+    <div class="grid g4">
+      <a class="glass work" href="#website"><span class="n">01</span><div class="card-ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></div><h3 class="t">เว็บไซต์การเรียนรู้</h3><p class="muted" style="font-size:14.5px">บทเรียนออนไลน์เรื่องการออกแบบและสร้าง Chat Bot</p><span class="go">เปิดดูในหน้านี้ →</span></a>
+      <a class="glass work" href="#game"><span class="n">02</span><div class="card-ic"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><path d="M7 11v3M5.5 12.5h3M15 12h.01M18 13h.01"/></svg></div><h3 class="t">เกมประกอบการสอน</h3><p class="muted" style="font-size:14.5px">กิจกรรมเสริมการเรียนรู้แบบโต้ตอบ</p><span class="go">เปิดดูในหน้านี้ →</span></a>
+      <a class="glass work" href="#manual"><span class="n">03</span><div class="card-ic"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h6M8 11h6"/></svg></div><h3 class="t">คู่มือการเล่นเกม</h3><p class="muted" style="font-size:14.5px">ขั้นตอนเข้าใช้และวิธีเล่นสำหรับผู้เรียน</p><span class="go">เปิดดูในหน้านี้ →</span></a>
+      <a class="glass work" href="#video"><span class="n">04</span><div class="card-ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/></svg></div><h3 class="t">วิดีโอสอนสร้าง Chat Bot</h3><p class="muted" style="font-size:14.5px">สาธิตด้วย LINE Official Account</p><span class="go">เปิดดูในหน้านี้ →</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- 2 BACKGROUND -->
+<section class="band alt" id="background" data-title="ความเป็นมา">
+  <div class="deco"><div class="dots"></div><div class="orb o2" style="opacity:.25"></div></div>
+  <div class="wrap">
+    <div class="head"><span class="bignum">02</span><span class="eyebrow">Background</span><h2 class="h2">ความเป็นมาและความสำคัญ</h2></div>
+    <div class="grid g3">
+      <div class="glass hl rv">
+        <div class="card-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3 class="t">ปัญหาตั้งต้น</h3>
+        <p class="muted" style="margin-top:8px">องค์กรได้รับคำถามซ้ำวันละหลายร้อยข้อความ เช่น “ค่าเทอมเท่าไหร่” “ออฟฟิศเปิดกี่โมง” เจ้าหน้าที่ตอบไม่ทัน ผู้ใช้ต้องรอนาน และอาจได้ข้อมูลผิดพลาด</p>
+      </div>
+      <div class="glass rv">
+        <div class="card-ic"><svg viewBox="0 0 24 24"><path d="M4 6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H10l-4 4v-4.2A3 3 0 0 1 4 14z"/></svg></div>
+        <h3 class="t">ทำไมต้อง Chat Bot</h3>
+        <p class="muted" style="margin-top:8px">Chat Bot ตอบได้ทันทีตลอด 24 ชั่วโมง และมีบทบาทในการบริการยุคดิจิทัลทั้งด้านการศึกษา ธุรกิจ และบริการสาธารณะ การสร้างบอทที่ดีต้องเข้าใจ NLP, Intent, Entity ผู้ใช้ และชุดข้อมูล FAQ</p>
+      </div>
+      <div class="glass rv">
+        <div class="card-ic"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4z"/><path d="M7 9v5c0 2 2.5 3 5 3s5-1 5-3V9"/></svg></div>
+        <h3 class="t">ทำไมต้องเป็นชุดสื่อ</h3>
+        <p class="muted" style="margin-top:8px">เนื้อหามีทั้งทฤษฎีและการลงมือสร้างบอทจริง จึงใช้เว็บไซต์สำหรับศึกษาเนื้อหา เกมสำหรับทบทวน คู่มือสำหรับแนะนำวิธีเล่น และวิดีโอสำหรับดูขั้นตอนบน LINE OA แล้วทำตามในใบสั่งงาน</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:26px;margin:56px 0 18px">วัตถุประสงค์เชิงพฤติกรรม 10 ข้อ</h3>
+    <div class="grid g3">
+      <div class="glass rv">
+        <div class="kpa"><h3>ด้านความรู้</h3><span class="tag t-k">K</span></div>
+        <div class="obj"><span class="num">1</span><span>บอกความหมายของ Chat Bot ได้</span></div>
+        <div class="obj"><span class="num">2</span><span>อธิบายหลักการทำงานเบื้องต้นของ Chat Bot ได้</span></div>
+        <div class="obj"><span class="num">3</span><span>บอกประโยชน์ด้านการศึกษา ธุรกิจ และการให้บริการได้</span></div>
+        <div class="obj"><span class="num">4</span><span>อธิบายขั้นตอนการสร้างด้วยแพลตฟอร์มสำเร็จรูปได้</span></div>
+        <div class="obj"><span class="num">5</span><span>วิเคราะห์ความต้องการของผู้ใช้งานเพื่อออกแบบบอทได้</span></div>
+        <div class="obj"><span class="num">6</span><span>เตรียมข้อมูลคำถาม–คำตอบ (FAQ) ได้</span></div>
+      </div>
+      <div class="glass rv">
+        <div class="kpa"><h3>ด้านทักษะกระบวนการ</h3><span class="tag t-p">P</span></div>
+        <div class="obj"><span class="num">7</span><span>สร้าง Chat Bot ด้วยแพลตฟอร์มสำเร็จรูปตามที่กำหนดได้<small>ใบงานที่ 1</small></span></div>
+        <div class="obj"><span class="num">8</span><span>ทดสอบการทำงานและสรุปผลการทดสอบเบื้องต้นได้<small>ใบงานที่ 2</small></span></div>
+        <div style="margin-top:18px;padding:16px;border-radius:14px;background:rgba(124,92,255,.12);border:1px solid var(--edge);font-size:15px">ฝึกปฏิบัติรายบุคคลบน <b>LINE Official Account</b> สร้างบอทให้ร้าน “CED Coffee”</div>
+      </div>
+      <div class="glass rv">
+        <div class="kpa"><h3>ด้านเจตคติ</h3><span class="tag t-a">A</span></div>
+        <div class="obj"><span class="num">9</span><span>อดทน รอบคอบ ปลอดภัย มีความละเอียดในการปฏิบัติงาน<small>ใบสังเกตการณ์</small></span></div>
+        <div class="obj"><span class="num">10</span><span>ซื่อสัตย์ รับผิดชอบ ตรงต่อเวลา และมีวินัย<small>ใบสังเกตการณ์</small></span></div>
+        <div style="margin-top:18px;font-size:14.5px;color:var(--text2)"><b style="color:var(--text)">ความรู้พื้นฐานที่จำเป็น</b><br>คอมพิวเตอร์เบื้องต้น · อินเทอร์เน็ตและการสืบค้น · การถาม–ตอบ Generative AI</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:26px;margin:56px 0 22px">กลุ่มเป้าหมายและลำดับการสอน</h3>
+    <div class="grid g4" style="margin-bottom:34px">
+      <div class="glass"><small class="muted mono">ระดับชั้น</small><div style="font-family:var(--f-display);font-size:26px;font-weight:700">ปวช.1</div></div>
+      <div class="glass"><small class="muted mono">รายวิชา</small><div style="font-family:var(--f-display);font-size:26px;font-weight:700">การสร้างแชทบอท</div></div>
+      <div class="glass"><small class="muted mono">เวลาสอน</small><div style="font-family:var(--f-display);font-size:26px;font-weight:700">60 นาที</div></div>
+      <div class="glass"><small class="muted mono">แพลตฟอร์ม</small><div style="font-family:var(--f-display);font-size:26px;font-weight:700">LINE OA</div></div>
+    </div>
+    <div class="glass">
+      <div class="flow">
+        <div class="fstep"><div class="dot">PRE</div><h4>ทดสอบก่อนเรียน</h4><p>12 ข้อ · 5 นาที</p></div>
+        <div class="fstep key"><div class="dot">M</div><h4>สนใจปัญหา</h4><p>คำถามนำ 4 ข้อ</p></div>
+        <div class="fstep"><div class="dot">I</div><h4>บอกกล่าว</h4><p>บรรยาย ถาม–ตอบ สาธิต ข้อ 1–6</p></div>
+        <div class="fstep"><div class="dot">∑</div><h4>สรุปความรู้</h4><p>Chat Bot ในหน้าเดียว</p></div>
+        <div class="fstep key"><div class="dot">A·P</div><h4>ลงมือทำ</h4><p>สร้างและทดสอบบอท ใบงาน 1–2</p></div>
+        <div class="fstep"><div class="dot">POST</div><h4>ทดสอบหลังเรียน</h4><p>เทียบคะแนนก่อนเรียน</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ADDIE -->
+<section class="band" id="addie" data-title="ADDIE Model">
+  <div class="deco"><div class="lines"></div><div class="orb o1" style="opacity:.35"></div><div class="orb o3"></div></div>
+  <div class="wrap">
+    <div class="head"><span class="bignum">03</span><span class="eyebrow">Development Process</span><h2 class="h2">กระบวนการพัฒนาตาม <span class="grad-text">ADDIE Model</span></h2><p class="lead muted">กดที่วงจรหรือแท็บเพื่อดูรายละเอียดของแต่ละขั้น</p></div>
+    <div class="addie">
+      <div class="wheel" id="wheel"></div>
+      <div class="panel" aria-live="polite"><div class="tabs" id="tabs" role="tablist"></div><div id="panelBody"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 WEBSITE -->
+<section class="band alt" id="website" data-title="เว็บไซต์การเรียนรู้">
+  <div class="deco"><div class="dots"></div></div>
+  <div class="wrap">
+    <div class="head"><span class="bignum">04</span><span class="eyebrow">Learning Website</span><h2 class="h2">เว็บไซต์สำหรับการเรียนรู้</h2></div>
+    <div class="media">
+      <div class="embed" data-src="https://chatbot-learning-eosin.vercel.app/" data-open="https://chatbot-learning-eosin.vercel.app/" data-label="chatbot-learning-eosin.vercel.app"></div>
+      <div class="side">
+        <div class="glass">
+          <h3>ภาพรวม</h3>
+          <dl style="margin:6px 0 0">
+            <div class="kv"><dt>จุดประสงค์</dt><dd>ให้ผู้เรียนศึกษาเนื้อหาเรื่องการออกแบบและสร้าง Chat Bot ได้ด้วยตนเอง</dd></div>
+            <div class="kv"><dt>เนื้อหาหลัก</dt><dd>ความหมาย · หลักการทำงาน · ประโยชน์ · ขั้นตอนสร้างด้วยแพลตฟอร์มสำเร็จรูป · วิเคราะห์ผู้ใช้ · เตรียม FAQ</dd></div>
+            <div class="kv"><dt>วิธีเริ่มเรียน</dt><dd>เปิดลิงก์บนคอมพิวเตอร์หรือมือถือ แล้วเลื่อนอ่านและกดเมนูบทเรียนในช่องด้านซ้าย</dd></div>
+          </dl>
+        </div>
+        <a class="btn btn-glow" href="https://chatbot-learning-eosin.vercel.app/" target="_blank" rel="noopener">เปิดเว็บไซต์เพื่อทดลองใช้งาน ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 GAME -->
+<section class="band" id="game" data-title="เกมประกอบการสอน">
+  <div class="deco"><div class="orb o3" style="left:5%;top:20%"></div><div class="dots"></div></div>
+  <div class="wrap">
+    <div class="head"><span class="bignum">05</span><span class="eyebrow">Game</span><h2 class="h2">เกมประกอบการสอน</h2></div>
+    <div class="media">
+      <div class="embed" data-src="https://game-chatbot-dusky.vercel.app/" data-open="https://game-chatbot-dusky.vercel.app/" data-label="game-chatbot-dusky.vercel.app"></div>
+      <div class="side">
+        <div class="glass">
+          <h3>ภาพรวม</h3>
+          <dl style="margin:6px 0 0">
+            <div class="kv"><dt>บทบาท</dt><dd>กิจกรรมเสริมการเรียน ใช้ทบทวนความรู้เรื่อง Chat Bot อย่างสนุกและมีส่วนร่วม</dd></div>
+            <div class="kv"><dt>วิธีเข้าเกม</dt><dd>เปิดลิงก์เกม แล้วเล่นได้ทันทีในช่องด้านซ้าย หรือกดขยายเต็มจอ</dd></div>
+            <div class="kv"><dt>ใช้คู่กับ</dt><dd>คู่มือการเล่นเกม (หัวข้อถัดไป)</dd></div>
+          </dl>
+        </div>
+        <a class="btn btn-glow" href="https://game-chatbot-dusky.vercel.app/" target="_blank" rel="noopener">ทดลองเล่นเกม ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 MANUAL -->
+<section class="band alt" id="manual" data-title="คู่มือการเล่นเกม">
+  <div class="deco"><div class="dots"></div></div>
+  <div class="wrap">
+    <div class="head"><span class="bignum">06</span><span class="eyebrow">Game Manual</span><h2 class="h2">คู่มือการเล่นเกม</h2></div>
+    <div class="media">
+      <div class="embed" data-src="https://manual-gamechatbot.vercel.app/" data-open="https://manual-gamechatbot.vercel.app/" data-label="manual-gamechatbot.vercel.app"></div>
+      <div class="side">
+        <div class="glass">
+          <h3>ภาพรวม</h3>
+          <dl style="margin:6px 0 0">
+            <div class="kv"><dt>จุดประสงค์</dt><dd>แนะนำวิธีเข้าใช้งานและวิธีเล่นเกม ให้ผู้เรียนเริ่มเล่นได้ด้วยตนเอง</dd></div>
+            <div class="kv"><dt>ขั้นตอนใช้งาน</dt><dd>อ่านคู่มือ → เปิดเกม → เล่นตามขั้นตอน → ทบทวนผลการเล่น</dd></div>
+            <div class="kv"><dt>คำแนะนำ</dt><dd>อ่านคู่มือให้ครบก่อนเริ่มเกม และเปิดคู่มือคู่กันระหว่างเล่น</dd></div>
+          </dl>
+        </div>
+        <a class="btn btn-glow" href="https://manual-gamechatbot.vercel.app/" target="_blank" rel="noopener">เปิดคู่มือฉบับเต็ม ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 VIDEO -->
+<section class="band" id="video" data-title="วิดีโอสอน">
+  <div class="deco"><div class="orb o1" style="opacity:.3"></div><div class="lines"></div></div>
+  <div class="wrap">
+    <div class="head"><span class="bignum">07</span><span class="eyebrow">Video Lesson</span><h2 class="h2">วิดีโอสอนการสร้าง Chat Bot</h2></div>
+    <div class="media">
+      <div class="embed" data-video="1" data-src="https://www.youtube-nocookie.com/embed/2r5nMyucKus?rel=0&playsinline=1" data-open="https://m.youtube.com/watch?v=2r5nMyucKus&feature=youtu.be" data-label="youtube.com/watch?v=2r5nMyucKus"></div>
+      <div class="side">
+        <div class="glass">
+          <h3>การสร้าง Chat Bot ด้วย LINE Official Account</h3>
+          <dl style="margin:6px 0 0">
+            <div class="kv"><dt>จุดประสงค์</dt><dd>สาธิตขั้นตอนการสร้างบอทให้ผู้เรียนดูแล้วทำตามได้</dd></div>
+            <div class="kv"><dt>ใช้ในกิจกรรม</dt><dd>ใบสั่งงานที่ 1 นักเรียนนำความรู้จากคลิปไปสร้างบอทร้าน CED Coffee (วัตถุประสงค์ข้อ 7)</dd></div>
+          </dl>
+        </div>
+        <a class="btn btn-glow" href="https://m.youtube.com/watch?v=2r5nMyucKus&feature=youtu.be" target="_blank" rel="noopener">เปิดรับชมบน YouTube ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 DEMO -->
+<section class="band alt" id="demo" data-title="ผลงานจริง">
+  <div class="deco"><div class="orb o1"></div><div class="orb o2"></div><div class="dots"></div></div>
+  <div class="wrap">
+    <div class="head"><span class="bignum">08</span><span class="eyebrow">Real Work Demonstration</span><h2 class="h2">สาธิต<span class="grad-text">ผลงานจริง</span>ต่อคณะกรรมการ</h2><p class="lead muted">ภาพตัวอย่างสดของผลงานทั้ง 4 ชิ้น กดที่การ์ดเพื่อเปิดผลงานในแท็บใหม่</p></div>
+    <div class="gallery" id="gallery">
+      <a class="tile" href="https://chatbot-learning-eosin.vercel.app/" target="_blank" rel="noopener" data-src="https://chatbot-learning-eosin.vercel.app/"><span class="num">01 · WEBSITE</span><div class="thumb"><div class="ph"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg></div></div><div class="info"><div><b>เว็บไซต์การเรียนรู้</b><small>chatbot-learning-eosin.vercel.app</small></div><span class="pill">เปิด ↗</span></div></a>
+      <a class="tile" href="https://game-chatbot-dusky.vercel.app/" target="_blank" rel="noopener" data-src="https://game-chatbot-dusky.vercel.app/"><span class="num">02 · GAME</span><div class="thumb"><div class="ph"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><path d="M7 11v3M5.5 12.5h3M15 12h.01M18 13h.01"/></svg></div></div><div class="info"><div><b>เกมประกอบการสอน</b><small>game-chatbot-dusky.vercel.app</small></div><span class="pill">เล่น ↗</span></div></a>
+      <a class="tile" href="https://manual-gamechatbot.vercel.app/" target="_blank" rel="noopener" data-src="https://manual-gamechatbot.vercel.app/"><span class="num">03 · MANUAL</span><div class="thumb"><div class="ph"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h6M8 11h6"/></svg></div></div><div class="info"><div><b>คู่มือการเล่นเกม</b><small>manual-gamechatbot.vercel.app</small></div><span class="pill">เปิด ↗</span></div></a>
+      <a class="tile" href="https://m.youtube.com/watch?v=2r5nMyucKus&feature=youtu.be" target="_blank" rel="noopener" data-src="https://www.youtube-nocookie.com/embed/2r5nMyucKus?rel=0"><span class="num">04 · VIDEO</span><div class="thumb"><div class="ph"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z"/></svg></div></div><div class="info"><div><b>วิดีโอสอนการสร้าง Chat Bot</b><small>youtube.com · 2r5nMyucKus</small></div><span class="pill">ดู ↗</span></div></a>
+    </div>
+    <div class="checks">
+      <label><input type="checkbox" id="ck1" data-store="ck1"> สาธิตเว็บไซต์</label>
+      <label><input type="checkbox" id="ck2" data-store="ck2"> อธิบายคู่มือ</label>
+      <label><input type="checkbox" id="ck3" data-store="ck3"> เล่นเกม 1 รอบ</label>
+      <label><input type="checkbox" id="ck4" data-store="ck4"> เปิดวิดีโอ</label>
+    </div>
+  </div>
+</section>
+
+<!-- 9 RESULTS -->
+<section class="band light" id="results" data-title="ผลการดำเนินงาน">
+  <div class="wrap">
+    <div class="head"><span class="bignum">09</span><span class="eyebrow">Results</span><h2 class="h2">สรุปผลการดำเนินงาน</h2><p class="lead muted">ภาพรวมของงานทั้งหมดที่พัฒนาขึ้น ทั้งสื่อดิจิทัลและชุดเอกสารประกอบแผนการสอน</p></div>
+    <div class="grid g2">
+      <div class="paper">
+        <div class="card-ic"><svg viewBox="0 0 24 24"><path d="M5 12l4 4 10-10"/></svg></div>
+        <h3 class="t">ผลงานที่พัฒนาขึ้น</h3>
+        <ul class="clean" style="margin-top:12px">
+          <li><b>สื่อดิจิทัล 4 ชิ้น</b> เว็บไซต์การเรียนรู้ เกมประกอบการสอน คู่มือการเล่นเกม และวิดีโอสาธิตการสร้างบอทด้วย LINE OA</li>
+          <li><b>สื่อการสอน</b> สไลด์ 22 หน้า ใบเนื้อหา 13 หน้า ใบรายการถามตอบ 4 หน้า</li>
+          <li><b>ใบงาน</b> ใบสั่งงานที่ 1 สร้างบอทร้าน CED Coffee และใบสั่งงานที่ 2 ทดสอบบอท 10 กรณี</li>
+          <li><b>เครื่องมือวัดผล</b> แบบทดสอบก่อน–หลังเรียน 12+12 ข้อพร้อมเฉลย ใบประเมินผลการปฏิบัติงาน 2 ใบ และใบสังเกตการณ์</li>
+        </ul>
+      </div>
+      <div class="paper">
+        <div class="card-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l6 4"/></svg></div>
+        <h3 class="t">การเชื่อมโยงสื่อกับการเรียนรู้</h3>
+        <ul class="clean" style="margin-top:12px">
+          <li><b>ศึกษาเนื้อหา (K1–6)</b> เว็บไซต์การเรียนรู้ สไลด์ และใบเนื้อหา</li>
+          <li><b>ทบทวนความรู้</b> เกมประกอบการสอน ใช้คู่กับคู่มือการเล่นเกม</li>
+          <li><b>ลงมือสร้างบอท (P7)</b> วิดีโอ LINE OA เป็นต้นแบบให้ทำตามในใบสั่งงานที่ 1</li>
+          <li><b>ทดสอบบอท (P8)</b> ใบสั่งงานที่ 2 ทดสอบ 4 ประเภท เกณฑ์ผ่านร้อยละ 80</li>
+          <li><b>เจตคติ (A9–10)</b> ใบสังเกตการณ์ 4 ระดับ</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="verdict">
+      <div class="big">ครบ<br>พร้อมใช้</div>
+      <div><b style="font-size:18px">สรุป</b><p style="margin-top:6px">พัฒนาสื่อได้ครบทั้ง 4 ประเภทและเผยแพร่ออนไลน์พร้อมใช้งาน ชุดเอกสารครอบคลุมวัตถุประสงค์ทั้ง 10 ข้อ เกณฑ์ความสำเร็จของผู้เรียนกำหนดไว้ชัดเจน คือบอทต้องตอบถูกไม่น้อยกว่าร้อยละ 80 และเปรียบเทียบคะแนนก่อน–หลังเรียน โดยผลคะแนนของผู้เรียนจะได้หลังนำไปสอนจริง</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 PROBLEMS -->
+<section class="band light" id="problems" data-title="ปัญหาและแนวทางแก้ไข" style="background:#ECE9F8">
+  <div class="wrap">
+    <div class="head"><span class="bignum">10</span><span class="eyebrow">Problems &amp; Solutions</span><h2 class="h2">ปัญหาและแนวทางการแก้ไข</h2><p class="lead muted">สรุปปัญหาที่พบจากการพัฒนาและนำสื่อไปใช้ พร้อมแนวทางแก้ไขแต่ละข้อ</p></div>
+    <ol class="probs">
+      <li class="prob rv"><span class="pnum">01</span><div class="pbody"><div class="pq"><span class="lab lab-p">ปัญหา</span><p>เวลาในแผนการสอนกำหนด 60 นาที แต่ตารางปฏิบัติการวางกิจกรรมต่อเนื่องถึงนาทีที่ 90 ทำให้ใบงานและแบบทดสอบหลังเรียนอาจไม่ทันในคาบ</p></div><div class="pa"><span class="lab lab-s">แนวทางแก้ไข</span><p>ปรับตารางกิจกรรมให้พอดี 60 นาที หรือแยกใบสั่งงานที่ 2 ไปทำในคาบถัดไป</p></div></div></li>
+      <li class="prob rv"><span class="pnum">02</span><div class="pbody"><div class="pq"><span class="lab lab-p">ปัญหา</span><p>ผู้เรียนพิมพ์คำที่ไม่ได้ตั้งเป็นคำสำคัญ เช่น “ค่าส่ง” บอทจึงไม่ตอบ</p></div><div class="pa"><span class="lab lab-s">แนวทางแก้ไข</span><p>ตั้งคำสำคัญอย่างน้อย 3 คำต่อหัวข้อ และทดสอบการพิมพ์สะกดผิดหรือใช้คำอื่นทุกครั้ง</p></div></div></li>
+      <li class="prob rv"><span class="pnum">03</span><div class="pbody"><div class="pq"><span class="lab lab-p">ปัญหา</span><p>ผู้ใช้ถามนอกขอบเขต เช่น “ร้านมี Wi-Fi ไหม” แล้วสับสนเมื่อไม่ได้คำตอบ</p></div><div class="pa"><span class="lab lab-s">แนวทางแก้ไข</span><p>ตั้งข้อความ Fallback ที่สุภาพ และแนะนำให้เลือกเมนูหรือติดต่อร้าน</p></div></div></li>
+      <li class="prob rv"><span class="pnum">04</span><div class="pbody"><div class="pq"><span class="lab lab-p">ปัญหา</span><p>ประโยคฝึกซ้ำกันข้าม Intent ทำให้บอทจับเจตนาผิด</p></div><div class="pa"><span class="lab lab-s">แนวทางแก้ไข</span><p>ไม่ใช้ประโยคซ้ำข้าม Intent และเตรียมประโยคที่หลากหลาย 10–15 ประโยคต่อ Intent</p></div></div></li>
+      <li class="prob rv"><span class="pnum">05</span><div class="pbody"><div class="pq"><span class="lab lab-p">ปัญหา</span><p>เครื่องมือพื้นฐานของ LINE OA รองรับเฉพาะการตอบกลับแบบไม่ซับซ้อน เชื่อมฐานข้อมูลไม่ได้</p></div><div class="pa"><span class="lab lab-s">แนวทางแก้ไข</span><p>กำหนดขอบเขตงานในคาบให้ชัด และแนะนำ Messaging API สำหรับการต่อยอด</p></div></div></li>
+      <li class="prob rv"><span class="pnum">06</span><div class="pbody"><div class="pq"><span class="lab lab-p">ปัญหา</span><p>สื่อทั้ง 4 ชิ้นต้องใช้อินเทอร์เน็ต หากเครือข่ายในห้องเรียนขัดข้อง กิจกรรมจะสะดุด</p></div><div class="pa"><span class="lab lab-s">แนวทางแก้ไข</span><p>ตรวจลิงก์และเครือข่ายก่อนสอน และเตรียมไฟล์สไลด์และวิดีโอสำรอง</p></div></div></li>
+      <li class="prob rv"><span class="pnum">07</span><div class="pbody"><div class="pq"><span class="lab lab-p">ปัญหา</span><p>ผู้เรียนมีพื้นฐานไม่เท่ากัน บางคนสร้างบัญชีหรือตั้งค่า LINE OA ได้ช้ากว่าเพื่อน</p></div><div class="pa"><span class="lab lab-s">แนวทางแก้ไข</span><p>ให้ผู้เรียนดูวิดีโอซ้ำได้เอง และใช้เว็บไซต์กับคู่มือเป็นแหล่งทบทวนรายบุคคล</p></div></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 11 RECOMMENDATIONS -->
+<section class="band light" id="recommend" data-title="ข้อเสนอแนะ">
+  <div class="wrap">
+    <div class="head"><span class="bignum">11</span><span class="eyebrow">Recommendations</span><h2 class="h2">ข้อเสนอแนะ</h2></div>
+    <div class="grid g2">
+      <div class="paper rv">
+        <span class="src s-doc">ข้อเสนอแนะจากข้อมูลในเอกสาร</span>
+        <h3 class="t" style="margin-top:12px">สำหรับการนำไปใช้</h3>
+        <ul class="clean" style="margin-top:14px">
+          <li>เริ่มออกแบบบอทจากผู้ใช้และข้อมูลที่ถูกต้อง ไม่เริ่มจากการเลือกเครื่องมือ</li>
+          <li>ทดสอบบอทให้ครบ 4 ประเภทก่อนเผยแพร่ ทั้งคำถามปกติ ปุ่มเมนู คำสะกดผิด และคำถามนอกขอบเขต</li>
+          <li>ข้อมูล FAQ ทุกข้อควรมีแหล่งอ้างอิง วันที่ปรับปรุง และผู้รับผิดชอบ</li>
+          <li>ติดตามผลหลังเผยแพร่ เช่น จำนวนผู้ใช้ จำนวนคำถามที่ตอบได้ และสัดส่วนคำตอบที่ถูกต้อง</li>
+          <li>คำนึงถึงความเป็นส่วนตัวของผู้ใช้เมื่อเก็บข้อมูลเพื่อประเมินผล</li>
+        </ul>
+      </div>
+      <div class="paper rv">
+        <span class="src s-plan">แนวทางพัฒนาต่อที่ผู้จัดทำเสนอ</span>
+        <h3 class="t" style="margin-top:12px">สำหรับการพัฒนาในอนาคต</h3>
+        <ul class="clean" style="margin-top:14px">
+          <li>นำชุดสื่อไปทดลองสอนกับนักเรียน ปวช.1 แล้วเปรียบเทียบคะแนนก่อน–หลังเรียน</li>
+          <li>สำรวจความพึงพอใจของผู้เรียนต่อเว็บไซต์ เกม คู่มือ และวิดีโอ</li>
+          <li>เพิ่มระดับความยากหรือด่านใหม่ในเกม ให้เชื่อมกับวัตถุประสงค์แต่ละข้อชัดขึ้น</li>
+          <li>ต่อยอดบทเรียนสู่ Dialogflow, Botpress หรือ LINE Messaging API สำหรับบอทที่ซับซ้อนขึ้น</li>
+          <li>จัดทำเวอร์ชันออฟไลน์ของสื่อสำหรับห้องเรียนที่อินเทอร์เน็ตไม่เสถียร</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 CONCLUSION -->
+<section class="band" id="conclusion" data-title="สรุป">
+  <div class="deco"><div class="lines"></div><div class="dots"></div><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+  <div class="wrap">
+    <div class="head center" style="justify-items:center"><span class="eyebrow">Conclusion</span><h2 class="h2">เนื้อหา · กิจกรรม · สื่อ <span class="grad-text">เชื่อมเป็นหนึ่งเดียว</span></h2></div>
+    <div class="grid g3">
+      <div class="glass hl"><div class="card-ic"><svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10"/></svg></div><h3 class="t">เนื้อหา</h3><p class="muted" style="margin-top:6px">6 หัวข้อตั้งแต่ความหมายจนถึงการเตรียม FAQ ตรงกับวัตถุประสงค์ K1–6</p></div>
+      <div class="glass hl"><div class="card-ic"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg></div><h3 class="t">กิจกรรม</h3><p class="muted" style="margin-top:6px">M–I–A–P จบด้วยการสร้างและทดสอบ CED Coffee Bot บน LINE OA</p></div>
+      <div class="glass hl"><div class="card-ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 10h8M8 14h5"/></svg></div><h3 class="t">สื่อการเรียนรู้</h3><p class="muted" style="margin-top:6px">เว็บไซต์ เกม คู่มือ และวิดีโอ ช่วยให้เรียน ทบทวน และลงมือทำได้จริง</p></div>
+    </div>
+    <p class="thanks"><span class="grad-text">Thank You</span></p>
+    <p class="qa"><span>Q &amp; A</span></p>
+    <p class="muted center" style="margin-top:14px">นางสาวณัฐวรา วิเศษทรัพย์ · นางสาวนพวรรณ กลิ่นนิรันดร์ · นายณัฐดนัย เหล่าเรือง<br>คณะครุศาสตร์อุตสาหกรรม มจพ. · CED-3 ปีการศึกษา 2569</p>
+    <div class="links4"><a class="btn btn-glow" href="#home">กลับสู่หน้าหลัก</a><a class="btn btn-glass" href="#demo">เปิดดูผลงานทั้งหมด</a></div>
+  </div>
+</section>
+
+<footer><div class="wrap">Final Project · การออกแบบและสร้าง Chat Bot · คณะครุศาสตร์อุตสาหกรรม มจพ.</div></footer>
+
+<button class="totop hide" id="toTop" type="button" aria-label="กลับด้านบน"><svg viewBox="0 0 24 24"><path d="M6 14l6-6 6 6"/></svg></button>
+
+<div class="pbar" id="pbar">
+  <button class="btn btn-glass btn-sm" type="button" id="pPrev">←</button>
+  <span class="count" id="pCount">1 / 12</span>
+  <span class="pdots" id="pDots"></span>
+  <span class="ttl" id="pTitle"></span>
+  <button class="btn btn-glow btn-sm" type="button" id="pNext">ถัดไป →</button>
+  <button class="btn btn-glass btn-sm" type="button" id="pExit">ออก (Esc)</button>
+</div>
+
+<script>
+(function(){
+  var store={get:function(k){try{return localStorage.getItem('cbfp:'+k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem('cbfp:'+k,v)}catch(e){}}};
+  var sections=[].slice.call(document.querySelectorAll('section.band'));
+  var body=document.body;
+
+  /* NAV + progress */
+  var nl=document.getElementById('navlinks');
+  sections.forEach(function(s,i){var a=document.createElement('a');a.href='#'+s.id;a.textContent=s.dataset.title;nl.appendChild(a)});
+  var links=[].slice.call(nl.querySelectorAll('a'));
+  function markNav(id){links.forEach(function(a){var on=a.getAttribute('href')==='#'+id;a.classList.toggle('on',on);if(on)nl.scrollTo({left:a.offsetLeft-60,behavior:'smooth'})})}
+  var prog=document.getElementById('progress'),tt=document.getElementById('toTop');
+  window.addEventListener('scroll',function(){var h=document.documentElement.scrollHeight-innerHeight;prog.style.width=(h>0?scrollY/h*100:0)+'%';tt.classList.toggle('hide',scrollY<500)},{passive:true});
+  tt.addEventListener('click',function(){scrollTo({top:0,behavior:'smooth'})});
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)markNav(e.target.id)})},{rootMargin:'-45% 0px -50% 0px'});
+    sections.forEach(function(s){io.observe(s)});
+    var rio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('play');rio.unobserve(e.target)}})},{threshold:.12});
+    document.querySelectorAll('.rv').forEach(function(el){rio.observe(el)});
+  }
+
+  /* ADDIE */
+  var A=[
+    {k:'A',th:'การวิเคราะห์',en:'ANALYSIS',col:'#5C8BFF',items:[
+      'กลุ่มเป้าหมาย: นักเรียน ปวช.1 วิชาการสร้างแชทบอท ชั้น CED-3 ปีการศึกษา 2569',
+      'ความรู้พื้นฐาน: คอมพิวเตอร์เบื้องต้น อินเทอร์เน็ตและการสืบค้น การถาม–ตอบ Generative AI',
+      'วิเคราะห์เนื้อหา 6 หัวข้อ และวัตถุประสงค์ 10 ข้อ (K6 · P2 · A2)',
+      'ความต้องการสื่อ: ผู้เรียนต้องได้ทั้งความรู้ทฤษฎีและเห็นตัวอย่างการสร้างบอทจริงก่อนลงมือทำ',
+      'ลักษณะกิจกรรม: นำเข้าด้วยปัญหาการตอบคำถามซ้ำ แล้วฝึกปฏิบัติรายบุคคลบน LINE OA']},
+    {k:'D',th:'การออกแบบ',en:'DESIGN',col:'#7C5CFF',items:[
+      'โครงสร้างการสอน Start → 1 → … → 8 → End ตามขั้น M–I–A–P',
+      'ออกแบบเว็บไซต์ให้เรียงเนื้อหาตามลำดับหัวข้อ 1–6',
+      'ออกแบบเกมเป็นกิจกรรมทบทวนความรู้ และคู่มืออธิบายวิธีเล่น',
+      'วางแผนวิดีโอสาธิตการสร้างบอทด้วย LINE OA ให้ใช้คู่กับใบสั่งงานที่ 1',
+      'สไลด์ 22 หน้า และใบงาน 2 ใบในสถานการณ์ร้าน CED Coffee']},
+    {k:'D',th:'การพัฒนา',en:'DEVELOPMENT',col:'#A06BFF',items:[
+      'พัฒนาเว็บไซต์การเรียนรู้และเผยแพร่บน Vercel',
+      'พัฒนาเกมประกอบการสอนและคู่มือการเล่นเกม เผยแพร่ออนไลน์',
+      'ผลิตวิดีโอสอนการสร้าง Chat Bot และเผยแพร่บน YouTube',
+      'จัดทำเอกสาร 9 รายการ: ใบเนื้อหา ใบถามตอบ สไลด์ ใบสั่งงาน ใบประเมิน ใบสังเกตการณ์ แบบทดสอบพร้อมเฉลย',
+      'ตรวจสอบลิงก์และความพร้อมของสื่อก่อนนำไปใช้']},
+    {k:'I',th:'การนำไปใช้',en:'IMPLEMENTATION',col:'#C25BE0',items:[
+      'ขั้นนำ: คำถามกระตุ้น 4 ข้อ เช่น ใครตอบแชตตอนเที่ยงคืน',
+      'ขั้นบอกกล่าว: ใช้สไลด์และเว็บไซต์อธิบายเนื้อหาตามวัตถุประสงค์ 1–6',
+      'ใช้เกมเป็นกิจกรรมเสริมเพื่อทบทวนความรู้ โดยมีคู่มือแนะนำวิธีเล่น',
+      'ขั้นปฏิบัติ: ดูวิดีโอ LINE OA แล้วสร้างและทดสอบบอทในใบสั่งงานที่ 1–2']},
+    {k:'E',th:'การประเมินผล',en:'EVALUATION',col:'#E36BDB',items:[
+      'ด้านความรู้: แบบทดสอบก่อน–หลังเรียน 12 ข้อ 5 นาที',
+      'ด้านทักษะ: ใบสั่งงานและใบประเมินผลการปฏิบัติงาน',
+      'ด้านเจตคติ: ใบสังเกตการณ์ 4 ระดับ ดีมาก ดี พอใช้ แก้ไข',
+      'ทดสอบบอท 10 กรณี 4 ประเภท เกณฑ์ผ่านร้อยละ 80 ขึ้นไป',
+      'นำผลการทดสอบไปปรับปรุงคำสำคัญ คำตอบ และสื่อ']}
+  ];
+  var cx=190,cy=190,R=176,r=86,svg='<svg viewBox="0 0 380 380" aria-label="วงจร ADDIE"><defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#7CC4FF"/><stop offset="1" stop-color="#E36BDB"/></linearGradient></defs><circle class="spin" cx="190" cy="190" r="186" fill="none" stroke="url(#rg)" stroke-width="1.5" stroke-dasharray="4 10"/>';
+  function pt(a,rad){return (cx+rad*Math.cos(a)).toFixed(1)+','+(cy+rad*Math.sin(a)).toFixed(1)}
+  A.forEach(function(s,i){
+    var a0=-Math.PI/2+i*2*Math.PI/5+0.025,a1=-Math.PI/2+(i+1)*2*Math.PI/5-0.025,am=(a0+a1)/2,mr=(R+r)/2;
+    var mx=cx+mr*Math.cos(am),my=cy+mr*Math.sin(am);
+    svg+='<g class="seg" data-i="'+i+'" tabindex="0" role="tab" aria-label="'+s.en+'"><path d="M'+pt(a0,R)+' A'+R+' '+R+' 0 0 1 '+pt(a1,R)+' L'+pt(a1,r)+' A'+r+' '+r+' 0 0 0 '+pt(a0,r)+'Z" fill="'+s.col+'"/>'+
+      '<text x="'+mx+'" y="'+(my-2)+'" text-anchor="middle" fill="#0B0F2A" style="font:700 32px var(--f-display)">'+s.k+'</text>'+
+      '<text x="'+mx+'" y="'+(my+18)+'" text-anchor="middle" fill="#0B0F2A" style="font:600 11.5px var(--f-body)">'+s.th+'</text></g>';
+  });
+  svg+='<circle cx="190" cy="190" r="78" fill="#0E1438" stroke="rgba(169,148,255,.3)"/><text x="190" y="186" text-anchor="middle" fill="#EEF0FF" style="font:700 26px var(--f-display)">ADDIE</text><text x="190" y="210" text-anchor="middle" fill="#AEB3DA" style="font:500 12px var(--f-body)">Model</text></svg>';
+  var wheel=document.getElementById('wheel');wheel.innerHTML=svg;
+  var tabs=document.getElementById('tabs');
+  A.forEach(function(s,i){var b=document.createElement('button');b.type='button';b.className='tab';b.setAttribute('role','tab');b.dataset.i=i;b.textContent=s.k+' · '+s.th;tabs.appendChild(b)});
+  function showA(i){
+    var s=A[i];
+    tabs.querySelectorAll('.tab').forEach(function(b,j){var on=j===i;b.classList.toggle('on',on);b.style.background=on?s.col:'';b.setAttribute('aria-selected',on)});
+    wheel.querySelectorAll('.seg').forEach(function(g,j){g.classList.toggle('on',j===i)});
+    var h='<div class="en">STEP '+(i+1)+' / 5 · '+s.en+'</div><h3 style="margin-top:6px">'+s.k+' — '+s.th+'</h3><div class="items">';
+    s.items.forEach(function(t,j){h+='<div class="item" style="animation-delay:'+(j*60)+'ms"><i style="background:'+s.col+'">'+(j+1)+'</i><span>'+t+'</span></div>'});
+    document.getElementById('panelBody').innerHTML=h+'</div>';
+  }
+  tabs.addEventListener('click',function(e){var b=e.target.closest('.tab');if(b)showA(+b.dataset.i)});
+  wheel.addEventListener('click',function(e){var g=e.target.closest('.seg');if(g)showA(+g.dataset.i)});
+  wheel.addEventListener('keydown',function(e){var g=e.target.closest('.seg');if(g&&(e.key==='Enter'||e.key===' ')){e.preventDefault();showA(+g.dataset.i)}});
+  showA(0);
+
+  /* checklist */
+  document.querySelectorAll('input[type=checkbox][data-store]').forEach(function(c){c.checked=store.get(c.dataset.store)==='1';c.addEventListener('change',function(){store.set(c.dataset.store,c.checked?'1':'0')})});
+
+  /* EMBEDS */
+  var blocked=/claude|anthropic/i.test(location.hostname);
+  var IC={reload:'<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>',max:'<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',min:'<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',ext:'<svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/></svg>',play:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18"/></svg>'};
+  var embeds=[].slice.call(document.querySelectorAll('.embed'));
+  var scrim=null;
+  function fallbackHTML(open){return '<div class="fallback"><div><div class="fi">'+IC.play+'</div><b style="font-size:18px">แสดงหน้าเว็บจริงในช่องนี้</b><p>ตัวแสดงตัวอย่างของ Claude ไม่อนุญาตให้ฝังเว็บไซต์อื่น เมื่อเปิดไฟล์นี้จากเว็บไซต์ของคุณเอง (เช่น Vercel) หน้าเว็บจะแสดงในช่องนี้ทันที</p><a class="btn btn-glow btn-sm" href="'+open+'" target="_blank" rel="noopener">เปิดหน้าเว็บจริง ↗</a></div></div>'}
+  embeds.forEach(function(em){
+    var src=em.dataset.src,open=em.dataset.open,isV=em.dataset.video;
+    em.innerHTML='<div class="chrome"><span class="lights"><i></i><i></i><i></i></span><span class="url">'+em.dataset.label+'</span><span class="ctrl"><button type="button" data-a="reload" aria-label="โหลดใหม่">'+IC.reload+'</button><button type="button" data-a="max" aria-label="ขยายเต็มจอ">'+IC.max+'</button><a href="'+open+'" target="_blank" rel="noopener" aria-label="เปิดในแท็บใหม่">'+IC.ext+'</a></span></div><div class="vp'+(isV?' video':'')+'"></div>';
+    var vp=em.querySelector('.vp');
+    function mount(){
+      if(blocked){vp.innerHTML=fallbackHTML(open);return}
+      vp.innerHTML='<div class="loading"><span>กำลังโหลดหน้าเว็บ…</span></div>';
+      var f=document.createElement('iframe');f.src=src;f.loading='lazy';f.title=em.dataset.label;
+      f.setAttribute('allow','autoplay; fullscreen; encrypted-media; picture-in-picture');f.setAttribute('allowfullscreen','');
+      f.addEventListener('load',function(){var l=vp.querySelector('.loading');if(l)l.remove()});
+      vp.appendChild(f);
+    }
+    mount();
+    em.querySelector('[data-a=reload]').addEventListener('click',mount);
+    em.querySelector('[data-a=max]').addEventListener('click',function(){toggleMax(em)});
+  });
+  function toggleMax(em){
+    var on=!em.classList.contains('max');
+    embeds.forEach(function(x){x.classList.remove('max')});
+    if(scrim){scrim.remove();scrim=null}
+    if(on){em.classList.add('max');scrim=document.createElement('div');scrim.className='scrim';scrim.addEventListener('click',function(){toggleMax(em)});document.body.appendChild(scrim)}
+    var b=em.querySelector('[data-a=max]');b.innerHTML=on?IC.min:IC.max;b.setAttribute('aria-label',on?'ย่อกลับ':'ขยายเต็มจอ');
+  }
+  /* gallery live thumbnails */
+  var tiles=[].slice.call(document.querySelectorAll('.tile'));
+  if(!blocked){tiles.forEach(function(t){var th=t.querySelector('.thumb');var f=document.createElement('iframe');f.src=t.dataset.src;f.loading='lazy';f.tabIndex=-1;f.setAttribute('aria-hidden','true');th.appendChild(f);
+    function fit(){f.style.transform='scale('+(th.clientWidth/1280)+')'}fit();if('ResizeObserver' in window)new ResizeObserver(fit).observe(th)})}
+  document.addEventListener('securitypolicyviolation',function(e){if(/frame|child/.test(e.violatedDirective||e.effectiveDirective||'')&&!blocked){blocked=true;embeds.forEach(function(em){em.querySelector('.vp').innerHTML=fallbackHTML(em.dataset.open)});tiles.forEach(function(t){var f=t.querySelector('iframe');if(f)f.remove()})}});
+
+  /* PRESENTATION MODE */
+  var cur=0,dots=document.getElementById('pDots');
+  sections.forEach(function(s,i){var d=document.createElement('i');d.title=s.dataset.title;d.addEventListener('click',function(){go(i)});dots.appendChild(d)});
+  function go(i){cur=Math.max(0,Math.min(sections.length-1,i));sections.forEach(function(s,j){s.classList.toggle('cur',j===cur)});[].forEach.call(dots.children,function(d,j){d.classList.toggle('on',j===cur)});document.getElementById('pCount').textContent=(cur+1)+' / '+sections.length;document.getElementById('pTitle').textContent=sections[cur].dataset.title;scrollTo(0,0)}
+  function enter(at){var idx=0;sections.forEach(function(s,j){if(s.getBoundingClientRect().top<innerHeight*.4)idx=j});body.classList.add('present');go(at==null?idx:at);try{var p=document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){})}catch(e){}}
+  function exit(){var id=sections[cur].id;body.classList.remove('present');sections.forEach(function(s){s.classList.remove('cur')});try{if(document.fullscreenElement)document.exitFullscreen().catch(function(){})}catch(e){}document.getElementById(id).scrollIntoView()}
+  document.getElementById('presentBtn').addEventListener('click',function(){enter()});
+  document.querySelectorAll('[data-action=present]').forEach(function(b){b.addEventListener('click',function(){enter(0)})});
+  document.getElementById('pPrev').addEventListener('click',function(){go(cur-1)});
+  document.getElementById('pNext').addEventListener('click',function(){go(cur+1)});
+  document.getElementById('pExit').addEventListener('click',exit);
+  document.addEventListener('keydown',function(e){
+    var mx=document.querySelector('.embed.max');
+    if(e.key==='Escape'&&mx){toggleMax(mx);return}
+    if(!body.classList.contains('present'))return;
+    if(/INPUT|TEXTAREA/.test(e.target.tagName))return;
+    if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();go(cur+1)}else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}else if(e.key==='Escape')exit();else if(e.key==='Home')go(0);else if(e.key==='End')go(sections.length-1)});
+  document.addEventListener('click',function(e){var a=e.target.closest('a[href^="#"]');if(!a||!body.classList.contains('present'))return;var j=sections.indexOf(document.getElementById(a.getAttribute('href').slice(1)));if(j>-1){e.preventDefault();go(j)}});
+})();
+</script>
+
+</body>
+</html>
