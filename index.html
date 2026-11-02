@@ -221,6 +221,8 @@ ul.clean li::before{content:"";position:absolute;left:2px;top:.62em;width:9px;he
 .fallback p{font-size:14px;color:var(--text2);max-width:46ch;margin:8px auto 16px}
 .embed.max{position:fixed;z-index:90;inset:calc(10px + env(safe-area-inset-top,0px)) calc(10px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) calc(10px + env(safe-area-inset-left,0px));display:flex;flex-direction:column}
 .embed.max .vp{aspect-ratio:auto;flex:1}
+.hint{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 6px 4px;font-size:13.5px;color:var(--text2)}
+.embed.max .hint{display:none}
 .scrim{position:fixed;inset:0;background:rgba(5,8,22,.8);backdrop-filter:blur(6px);z-index:85}
 .side{display:grid;gap:16px}
 .side h3{font-size:20px}
@@ -764,7 +766,7 @@ body.present .pbar{display:flex;position:fixed;left:50%;transform:translateX(-50
   function fallbackHTML(open){return '<div class="fallback"><div><div class="fi">'+IC.play+'</div><b style="font-size:18px">แสดงหน้าเว็บจริงในช่องนี้</b><p>ตัวแสดงตัวอย่างของ Claude ไม่อนุญาตให้ฝังเว็บไซต์อื่น เมื่อเปิดไฟล์นี้จากเว็บไซต์ของคุณเอง (เช่น Vercel) หน้าเว็บจะแสดงในช่องนี้ทันที</p><a class="btn btn-glow btn-sm" href="'+open+'" target="_blank" rel="noopener">เปิดหน้าเว็บจริง ↗</a></div></div>'}
   embeds.forEach(function(em){
     var src=em.dataset.src,open=em.dataset.open,isV=em.dataset.video;
-    em.innerHTML='<div class="chrome"><span class="lights"><i></i><i></i><i></i></span><span class="url">'+em.dataset.label+'</span><span class="ctrl"><button type="button" data-a="reload" aria-label="โหลดใหม่">'+IC.reload+'</button><button type="button" data-a="max" aria-label="ขยายเต็มจอ">'+IC.max+'</button><a href="'+open+'" target="_blank" rel="noopener" aria-label="เปิดในแท็บใหม่">'+IC.ext+'</a></span></div><div class="vp'+(isV?' video':'')+'"></div>';
+    em.innerHTML='<div class="chrome"><span class="lights"><i></i><i></i><i></i></span><span class="url">'+em.dataset.label+'</span><span class="ctrl"><button type="button" data-a="reload" aria-label="โหลดใหม่">'+IC.reload+'</button><button type="button" data-a="max" aria-label="ขยายเต็มจอ">'+IC.max+'</button><a href="'+open+'" target="_blank" rel="noopener" aria-label="เปิดในแท็บใหม่">'+IC.ext+'</a></span></div><div class="vp'+(isV?' video':'')+'"></div><div class="hint"><span>หน้าเว็บไม่ขึ้นในกรอบ? กดเปิดหน้าเว็บจริงได้เลย</span><a class="btn btn-glow btn-sm" href="'+open+'" target="_blank" rel="noopener">เปิดหน้าเว็บจริง ↗</a></div>';
     var vp=em.querySelector('.vp');
     function mount(){
       if(blocked){vp.innerHTML=fallbackHTML(open);return}
